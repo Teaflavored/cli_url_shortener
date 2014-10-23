@@ -1,0 +1,59 @@
+while true
+  puts "Enter your email:"
+  email = gets.chomp
+  user = User.where(email: email).first_or_create!
+
+  choice = ""
+  until "012".split("").include?(choice)
+    puts "What do you want to do?"
+    puts "0. Create shortened URL\n1. Visit shortened URL\n2. Browse Topics"
+    choice = gets.chomp
+  end
+
+  case choice
+  when "0"
+    puts "Enter long url:"
+    user_long_url = gets.chomp
+    shorturl = ShortenedUrl.create_for_user_and_long_url!(user, user_long_url)
+    puts "Short url is: #{shorturl.short_url}"
+    puts "Select a topic to place your URL in"
+    
+    topics = TagTopic.all.pluck(:topic)
+    topics.each_with_index do |topic, index|
+      puts "#{index}. #{topic}"
+    end
+    puts "Select topic: "
+    user_topic_idx = gets.chomp.to_i
+    Tagging.tag_url!(TagTopic.find_by(topic: topics[user_topic_idx]), shorturl)
+    
+  when "1"
+    puts "Type in the shortened URL"
+    user_short_url = gets.chomp
+    short_url = ShortenedUrl.find_by(short_url: user_short_url)
+    user_long_url = short_url.long_url
+    Launchy.open(user_long_url)
+    Visit.record_visit!(user, short_url)
+  
+  when "2"
+    puts "Topics:"
+    topics = TagTopic.all.pluck(:topic)
+    topics.each_with_index do |topic, index|
+      puts "#{index}. #{topic}"
+    end
+    puts "Select topic: "
+    user_topic = gets.chomp
+  
+    topic = TagTopic.find_by(topic: topics[user_topic.to_i])
+    topic.most_popular_links.each_with_index do |link, i|
+      puts "#{i}. #{link.long_url}"
+    end
+  
+    puts "Select website:"
+    user_site = gets.chomp
+    long_url = topic.most_popular_links[user_site.to_i].long_url
+    Launchy.open(long_url)
+    Visit.record_visit!(user, ShortenedUrl.find_by(long_url: long_url))
+  
+  end
+end
+  
