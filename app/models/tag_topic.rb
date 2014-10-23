@@ -20,7 +20,7 @@ class TagTopic < ActiveRecord::Base
       .joins("LEFT OUTER JOIN visits ON visits.url_id = shortened_urls.id")
       .group("shortened_urls.id")
       .order("COUNT(visits.id) DESC")
-      .limit(2)
+      .limit(5)
   end
 end
 
